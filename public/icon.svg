@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Meu Controle Financeiro">
+  <defs>
+    <linearGradient id="g" x1="72" y1="36" x2="440" y2="476" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#14b8a6"/>
+      <stop offset="0.52" stop-color="#059669"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#g)"/>
+  <path fill="#fff" d="M136 176c0-30.9 25.1-56 56-56h128c30.9 0 56 25.1 56 56v160c0 30.9-25.1 56-56 56H192c-30.9 0-56-25.1-56-56V176Z" opacity=".96"/>
+  <path fill="#064e3b" d="M176 196c0-11 9-20 20-20h120c11 0 20 9 20 20s-9 20-20 20H196c-11 0-20-9-20-20Zm0 76c0-11 9-20 20-20h56c11 0 20 9 20 20s-9 20-20 20h-56c-11 0-20-9-20-20Zm0 76c0-11 9-20 20-20h120c11 0 20 9 20 20s-9 20-20 20H196c-11 0-20-9-20-20Z"/>
+  <circle cx="330" cy="272" r="28" fill="#fbbf24"/>
+</svg>
