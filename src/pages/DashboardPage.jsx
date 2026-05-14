@@ -51,7 +51,7 @@ export default function DashboardPage({ data, selectedMonth, onMonthChange, show
 
       <section className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
-          <SummaryCard label="Total geral do mês" value={formatMoney(summary.monthTotal)} helper={formatMonth(selectedMonth)} icon={Wallet} tone="emerald" />
+          <SummaryCard label="Total geral do mês" value={formatMoney(summary.monthTotal)} helper={formatMonth(selectedMonth)} icon={Wallet} tone="emerald" size="large" />
         </div>
         <SummaryCard label="Contas" value={formatMoney(summary.billsTotal)} icon={ReceiptText} tone="white" />
         <SummaryCard label="Cartão" value={formatMoney(summary.cardsTotal)} icon={CreditCard} tone="blue" />

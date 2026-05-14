@@ -50,6 +50,8 @@ export default function SettingsPage({ data, refresh, showToast, pwaInstall }) {
     branch: 'main',
     path: 'data/encrypted-finance-data.json',
     token: '',
+    rememberPassword: false,
+    savedPassword: '',
     lastSha: null,
     lastSyncedAt: null,
   });
@@ -62,7 +64,14 @@ export default function SettingsPage({ data, refresh, showToast, pwaInstall }) {
   }, [data.notification_settings]);
 
   useEffect(() => {
-    getGithubSyncConfig().then(setSyncForm).catch(() => {});
+    getGithubSyncConfig()
+      .then((config) => {
+        setSyncForm(config);
+        if (config.rememberPassword && config.savedPassword) {
+          setSyncPassword(config.savedPassword);
+        }
+      })
+      .catch(() => {});
   }, [data.settings]);
 
   async function exportBackup() {
@@ -149,17 +158,30 @@ export default function SettingsPage({ data, refresh, showToast, pwaInstall }) {
   }
 
   async function saveSyncConfig() {
-    const saved = await saveGithubSyncConfig(syncForm);
+    const saved = await saveGithubSyncConfig({
+      ...syncForm,
+      savedPassword: syncForm.rememberPassword ? syncPassword : '',
+    });
     setSyncForm(saved);
     await refresh();
     showToast('Configuração do cofre salva neste aparelho.');
+  }
+
+  async function saveSyncedConfig(config) {
+    const saved = await saveGithubSyncConfig({
+      ...config,
+      rememberPassword: syncForm.rememberPassword,
+      savedPassword: syncForm.rememberPassword ? syncPassword : '',
+    });
+    setSyncForm(saved);
+    return saved;
   }
 
   async function downloadVault() {
     setSyncBusy(true);
     try {
       const result = await downloadFromGithub(syncForm, syncPassword);
-      setSyncForm(result.config);
+      await saveSyncedConfig(result.config);
       await refresh({ skipGeneration: true });
       showToast('Cofre baixado e aplicado neste aparelho.');
     } catch (error) {
@@ -173,7 +195,7 @@ export default function SettingsPage({ data, refresh, showToast, pwaInstall }) {
     setSyncBusy(true);
     try {
       const result = await uploadToGithub(syncForm, syncPassword, { force });
-      setSyncForm(result.config);
+      await saveSyncedConfig(result.config);
       setConfirmForceUpload(false);
       await refresh();
       showToast('Cofre criptografado enviado ao GitHub.');
@@ -252,8 +274,25 @@ export default function SettingsPage({ data, refresh, showToast, pwaInstall }) {
           label="Senha do cofre"
           type="password"
           value={syncPassword}
-          onChange={setSyncPassword}
+          onChange={(password) => {
+            setSyncPassword(password);
+            if (syncForm.rememberPassword) {
+              setSyncForm({ ...syncForm, savedPassword: password });
+            }
+          }}
           placeholder="Senha combinada com sua esposa"
+        />
+        <ToggleField
+          label="Salvar senha neste dispositivo"
+          description="Use apenas no seu celular ou computador de confiança. A senha fica salva localmente neste aparelho."
+          checked={Boolean(syncForm.rememberPassword)}
+          onChange={(rememberPassword) =>
+            setSyncForm({
+              ...syncForm,
+              rememberPassword,
+              savedPassword: rememberPassword ? syncPassword : '',
+            })
+          }
         />
         <div className="rounded-2xl bg-slate-50 p-3 text-xs leading-relaxed text-slate-600">
           <p><b>Última sincronização:</b> {syncForm.lastSyncedAt ? new Date(syncForm.lastSyncedAt).toLocaleString('pt-BR') : 'nunca'}</p>

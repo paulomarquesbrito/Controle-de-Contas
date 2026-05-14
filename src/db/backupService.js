@@ -3,7 +3,7 @@ import { STORE_NAMES, loadAllData, replaceAllData } from './indexedDb.js';
 export async function createBackupPayload() {
   const data = await loadAllData();
   data.settings = (data.settings || []).map((setting) =>
-    setting.id === 'github_sync' ? { ...setting, token: '' } : setting,
+    setting.id === 'github_sync' ? { ...setting, token: '', savedPassword: '' } : setting,
   );
 
   return {
