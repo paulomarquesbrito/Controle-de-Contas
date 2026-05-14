@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #10201b;
+  background: #ecfdf5;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: #ecfdf5;
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(45, 212, 191, 0.18), transparent 28rem),
+    linear-gradient(180deg, #ecfdf5 0%, #f8fafc 42%, #f1f5f9 100%);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+select,
+input[type='checkbox'],
+input[type='file'] {
+  cursor: pointer;
+}
+
+input,
+textarea,
+select {
+  touch-action: manipulation;
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.tap-highlight {
+  -webkit-tap-highlight-color: rgba(16, 185, 129, 0.18);
+}
