@@ -54,8 +54,8 @@ export async function notifyImportantAlerts(alerts = []) {
   for (const alert of important) {
     await registration.showNotification(alert.title, {
       body: alert.message,
-      icon: '/icon.svg',
-      badge: '/icon.svg',
+      icon: new URL('icon.svg', window.location.href).toString(),
+      badge: new URL('icons/icon-192.png', window.location.href).toString(),
       tag: `finance-${alert.title}`,
     });
   }

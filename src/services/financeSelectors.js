@@ -99,6 +99,8 @@ export function upcomingBills(bills, days = 7) {
 export function buildAlerts(data, month) {
   const alerts = [];
   const today = todayISO();
+  const notificationSettings = data.notification_settings?.[0] || {};
+  const daysBeforeDue = Number(notificationSettings.daysBeforeDue || 3);
   const bills = billsForMonth(data.monthly_bills || [], month);
   const cards = data.cards || [];
   const transactions = data.card_transactions || [];
@@ -109,7 +111,7 @@ export function buildAlerts(data, month) {
     .forEach((bill) => alerts.push({ type: 'danger', title: 'Conta vencida', message: `${bill.name} venceu em ${formatDate(bill.dueDate)}.` }));
 
   bills
-    .filter((bill) => bill.effectiveStatus === BILL_STATUS.OPEN && daysBetween(today, bill.dueDate) >= 0 && daysBetween(today, bill.dueDate) <= 3)
+    .filter((bill) => bill.effectiveStatus === BILL_STATUS.OPEN && daysBetween(today, bill.dueDate) >= 0 && daysBetween(today, bill.dueDate) <= daysBeforeDue)
     .forEach((bill) =>
       alerts.push({ type: 'warning', title: 'Conta próxima do vencimento', message: `${bill.name} vence em ${formatDate(bill.dueDate)}.` }),
     );
@@ -123,7 +125,7 @@ export function buildAlerts(data, month) {
     const diff = daysBetween(today, invoice.dueDate);
     if (invoice.status === 'Atrasada') {
       alerts.push({ type: 'danger', title: 'Fatura atrasada', message: `A fatura de ${card.name} venceu em ${formatDate(invoice.dueDate)}.` });
-    } else if (invoice.total > 0 && diff >= 0 && diff <= 3) {
+    } else if (invoice.total > 0 && diff >= 0 && diff <= daysBeforeDue) {
       alerts.push({ type: 'warning', title: 'Fatura próxima do vencimento', message: `${card.name} vence em ${formatDate(invoice.dueDate)}.` });
     }
   });
@@ -133,7 +135,6 @@ export function buildAlerts(data, month) {
     alerts.push({ type: 'info', title: 'Mês com contas em aberto', message: `Existem ${openCount} conta(s) ainda não pagas neste mês.` });
   }
 
-  const notificationSettings = data.notification_settings?.[0];
   const lastBackup = notificationSettings?.lastBackupAt;
   if (!lastBackup || daysBetween(lastBackup.slice(0, 10), today) >= 15) {
     alerts.push({ type: 'info', title: 'Lembrete de backup', message: 'Exporte um backup JSON para proteger seus dados locais.' });
@@ -142,9 +143,8 @@ export function buildAlerts(data, month) {
   return alerts;
 }
 
-export function buildMonthlyReport(data, monthsBack = 6) {
-  const current = todayISO().slice(0, 7);
-  const months = Array.from({ length: monthsBack }, (_, index) => addMonths(current, index - (monthsBack - 1)));
+export function buildMonthlyReport(data, monthsBack = 6, anchorMonth = todayISO().slice(0, 7)) {
+  const months = Array.from({ length: monthsBack }, (_, index) => addMonths(anchorMonth, index - (monthsBack - 1)));
 
   return months.map((month) => {
     const summary = buildMonthSummary(data, month);

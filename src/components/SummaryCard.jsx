@@ -9,11 +9,13 @@ export default function SummaryCard({ label, value, helper, icon: Icon, tone = '
   };
 
   return (
-    <article className={`rounded-3xl bg-gradient-to-br p-4 shadow-soft ${tones[tone] || tones.emerald}`}>
+    <article className={`min-w-0 overflow-hidden rounded-3xl bg-gradient-to-br p-4 shadow-soft ${tones[tone] || tones.emerald}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-wide opacity-75">{label}</p>
-          <p className="mt-2 break-words text-2xl font-black leading-tight">{value}</p>
+          <p className="mt-2 truncate whitespace-nowrap text-[clamp(1.35rem,7vw,2rem)] font-black leading-tight" title={String(value)}>
+            {value}
+          </p>
         </div>
         {Icon ? (
           <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-white/20">
@@ -21,7 +23,11 @@ export default function SummaryCard({ label, value, helper, icon: Icon, tone = '
           </div>
         ) : null}
       </div>
-      {helper ? <p className="mt-3 text-sm font-medium opacity-80">{helper}</p> : null}
+      {helper ? (
+        <p className="mt-3 truncate whitespace-nowrap text-sm font-medium opacity-80" title={String(helper)}>
+          {helper}
+        </p>
+      ) : null}
     </article>
   );
 }

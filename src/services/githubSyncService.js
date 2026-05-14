@@ -1,5 +1,5 @@
 import { createBackupPayload, validateBackupPayload } from '../db/backupService.js';
-import { getById, loadAllData, replaceAllData, upsert } from '../db/indexedDb.js';
+import { getAll, getById, loadAllData, replaceAllData, upsert } from '../db/indexedDb.js';
 import { decryptJson, encryptJson } from './encryptionService.js';
 
 const CONFIG_ID = 'github_sync';
@@ -121,8 +121,19 @@ export async function downloadFromGithub(config, password) {
     throw new Error(validation.message);
   }
 
-  await replaceAllData(backupPayload.data);
+  const localNotificationSettings = await getAll('notification_settings');
+  const localSyncConfig = await getById('settings', CONFIG_ID);
+  const dataToRestore = {
+    ...backupPayload.data,
+    notification_settings: localNotificationSettings.length
+      ? localNotificationSettings
+      : backupPayload.data.notification_settings,
+    settings: (backupPayload.data.settings || []).filter((item) => item.id !== CONFIG_ID),
+  };
+
+  await replaceAllData(dataToRestore);
   const savedConfig = await saveGithubSyncConfig({
+    ...(localSyncConfig || {}),
     ...normalized,
     lastSha: remote.sha,
     lastSyncedAt: new Date().toISOString(),
