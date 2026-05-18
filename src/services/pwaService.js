@@ -1,4 +1,7 @@
+import { Capacitor } from '@capacitor/core';
+
 export function registerServiceWorker() {
+  if (Capacitor.isNativePlatform()) return;
   if (!('serviceWorker' in navigator)) return;
 
   window.addEventListener('load', () => {

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ensureInitialData, loadAllData } from '../db/indexedDb.js';
 import { ensureBillsForMonth } from '../services/billService.js';
+import { scheduleAutomaticNotifications } from '../services/notificationService.js';
+import { addMonths, currentMonthKey } from '../utils/dateUtils.js';
 
 const EMPTY_DATA = {
   settings: [],
@@ -28,11 +30,17 @@ export function useFinanceData(selectedMonth) {
         if (!options.skipSeed) {
           await ensureInitialData();
         }
-        if (selectedMonth && !options.skipGeneration) {
-          await ensureBillsForMonth(selectedMonth);
+        if (!options.skipGeneration) {
+          const monthsToGenerate = new Set([currentMonthKey(), addMonths(currentMonthKey(), 1)]);
+          if (selectedMonth) monthsToGenerate.add(selectedMonth);
+          for (const month of monthsToGenerate) {
+            await ensureBillsForMonth(month);
+          }
         }
         const loaded = await loadAllData();
-        setData({ ...EMPTY_DATA, ...loaded });
+        await scheduleAutomaticNotifications({ ...EMPTY_DATA, ...loaded }).catch(() => {});
+        const reloaded = await loadAllData();
+        setData({ ...EMPTY_DATA, ...reloaded });
       } catch (err) {
         setError(err.message || 'Não foi possível carregar seus dados locais.');
       } finally {

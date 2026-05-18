@@ -18,6 +18,25 @@ export const STORE_NAMES = [
   'import_logs',
 ];
 
+export const DEFAULT_NOTIFICATION_SETTINGS = {
+  id: 'default',
+  enabled: false,
+  billsBeforeDue: true,
+  overdueBills: true,
+  invoicesBeforeDue: true,
+  overdueInvoices: true,
+  backupReminder: true,
+  daysBeforeDue: 3,
+  notificationTime: '09:00',
+  androidPermission: 'unknown',
+  androidSystemEnabled: null,
+  exactAlarmPermission: 'unknown',
+  lastBackupAt: null,
+  lastNotificationCheckAt: null,
+  lastAutomaticScheduleAt: null,
+  lastScheduledIds: [],
+};
+
 let dbPromise;
 
 function requestToPromise(request) {
@@ -167,16 +186,14 @@ export async function ensureInitialData() {
 
   const notificationSettings = await getById('notification_settings', 'default');
   if (!notificationSettings) {
-    await upsert('notification_settings', {
-      id: 'default',
-      enabled: false,
-      billsBeforeDue: true,
-      overdueBills: true,
-      invoicesBeforeDue: true,
-      backupReminder: true,
-      daysBeforeDue: 3,
-      lastBackupAt: null,
-      lastNotificationCheckAt: null,
-    });
+    await upsert('notification_settings', DEFAULT_NOTIFICATION_SETTINGS);
+  } else {
+    const missingDefaults = Object.keys(DEFAULT_NOTIFICATION_SETTINGS).some((key) => notificationSettings[key] === undefined);
+    if (missingDefaults) {
+      await upsert('notification_settings', {
+        ...DEFAULT_NOTIFICATION_SETTINGS,
+        ...notificationSettings,
+      });
+    }
   }
 }

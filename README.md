@@ -704,17 +704,80 @@ Importante: todo parser deve devolver lançamentos para conferência. Ele nunca 
 O app tem dois tipos de aviso:
 
 - avisos internos dentro do app;
-- notificações locais do sistema, quando o navegador permitir.
+- notificações locais do sistema.
 
-Como o app não tem backend, ele não faz Web Push remoto real.
+No navegador/PWA, a notificação só é confiável quando o app está aberto ou acabou de ser usado. Isso é uma limitação dos navegadores: para acordar o celular com o app fechado, um PWA normalmente precisa de Web Push com servidor.
 
-Isso significa:
+Para Android, este projeto agora também gera um app instalável por APK usando Capacitor. Nesse modo, as notificações são locais e agendadas pelo próprio celular, sem Firebase, sem backend e sem mandar seus dados para servidor.
 
-- os avisos internos sempre funcionam;
-- notificações do sistema dependem do navegador;
-- alguns celulares exigem que o app esteja instalado;
-- alguns navegadores exigem HTTPS;
-- acesso pelo IP da rede Wi-Fi pode limitar notificações.
+O app Android agenda:
+
+- contas próximas do vencimento;
+- contas vencidas;
+- faturas próximas do vencimento;
+- faturas vencidas;
+- lembrete de backup.
+
+### Como ativar no app Android
+
+1. Abra o app instalado pelo APK.
+2. Vá em `Ajustes`.
+3. Entre em `Notificações`.
+4. Ative `Ativar notificações automáticas no Android`.
+5. Ajuste `Dias antes do vencimento`.
+6. Ajuste `Horário dos avisos`, por exemplo `09:00`.
+7. Toque em `Permissão`.
+8. Aceite a permissão do Android.
+9. Toque em `Testar`.
+10. Toque em `Salvar`.
+
+Depois disso, sempre que você abrir o app, salvar dados, pagar uma conta, pagar uma fatura ou baixar dados do GitHub, o app recalcula os próximos avisos e agenda no Android.
+
+### Como gerar o APK sem Android Studio
+
+Você não precisa instalar Android Studio no computador. O GitHub Actions gera o APK para você.
+
+1. Suba os arquivos atualizados para o repositório do app.
+2. No GitHub, entre no repositório do app.
+3. Clique em `Actions`.
+4. Clique em `Build Android APK`.
+5. Clique em `Run workflow`.
+6. Aguarde terminar com sucesso.
+7. Abra a execução concluída.
+8. Baixe o artefato chamado `meu-controle-financeiro-apk`.
+9. Extraia o arquivo `.zip`.
+10. Envie o `app-debug.apk` para o celular.
+11. No celular, abra o APK e permita instalar app desconhecido se o Android pedir.
+
+Esse APK é uma versão de teste assinada automaticamente pelo GitHub/Gradle. Ele serve para uso pessoal. Para publicar na Play Store, o processo de assinatura é diferente.
+
+### Como atualizar o app Android
+
+Quando fizer alterações:
+
+1. Suba os arquivos novos no GitHub.
+2. Rode o workflow `Build Android APK`.
+3. Baixe o APK novo.
+4. Instale por cima do app antigo.
+
+Os dados locais normalmente continuam no aparelho porque o identificador do app continua o mesmo:
+
+```txt
+br.com.meucontrolefinanceiro.app
+```
+
+Mesmo assim, exporte backup ou envie para o cofre do GitHub antes de atualizar.
+
+### Comandos Android, se um dia quiser usar localmente
+
+Estes comandos existem no projeto:
+
+```bash
+npm run android:sync
+npm run android:apk
+```
+
+Mas para gerar APK localmente o computador precisa ter Android SDK instalado. Como você não quer Android Studio, use o GitHub Actions.
 
 ## 22. Erros Comuns
 
@@ -750,10 +813,11 @@ Tente:
 
 Confira:
 
-- permissão de notificação no navegador;
-- app instalado como PWA;
-- navegador compatível;
-- endereço em contexto seguro.
+- se você está usando o APK Android, e não apenas o PWA;
+- se a permissão de notificação foi concedida em `Ajustes > Notificações`;
+- se o Android não bloqueou notificações do app nas configurações do sistema;
+- se o app não foi colocado em modo de economia extrema de bateria;
+- se existe conta ou fatura com vencimento futuro/atrasado para agendar.
 
 Mesmo sem notificação do sistema, os avisos internos continuam aparecendo.
 
@@ -764,6 +828,7 @@ npm install
 npm run dev
 npm run build
 npm run preview
+npm run android:sync
 ```
 
 No Windows com PowerShell bloqueando npm:
@@ -773,4 +838,5 @@ npm.cmd install
 npm.cmd run dev
 npm.cmd run build
 npm.cmd run preview
+npm.cmd run android:sync
 ```

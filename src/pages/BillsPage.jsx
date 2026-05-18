@@ -1,4 +1,4 @@
-import { Check, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { Check, Pencil, Plus, Send, Trash2, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import CategoryBadge from '../components/CategoryBadge.jsx';
 import ConfirmModal from '../components/ConfirmModal.jsx';
@@ -17,6 +17,7 @@ import {
   saveRecurringBill,
 } from '../services/billService.js';
 import { billsForMonth } from '../services/financeSelectors.js';
+import { buildMonthlyAccountsShareText, shareMonthlyAccountsText } from '../services/monthShareService.js';
 import { dateFromMonthDay, todayISO } from '../utils/dateUtils.js';
 import { formatMoney } from '../utils/moneyUtils.js';
 
@@ -134,6 +135,17 @@ export default function BillsPage({ data, selectedMonth, onMonthChange, refresh,
     await refresh();
   }
 
+  async function shareMonthBills() {
+    try {
+      const text = buildMonthlyAccountsShareText(data, selectedMonth);
+      const message = await shareMonthlyAccountsText(text);
+      showToast(message);
+    } catch (error) {
+      if (error.name === 'AbortError') return;
+      showToast(error.message || 'Não foi possível compartilhar a lista agora.');
+    }
+  }
+
   return (
     <div className="space-y-4">
       <MonthSelector month={selectedMonth} onChange={onMonthChange} />
@@ -157,9 +169,14 @@ export default function BillsPage({ data, selectedMonth, onMonthChange, refresh,
 
       {tab === 'month' ? (
         <section className="space-y-3">
-          <button type="button" onClick={newBillForm} className="flex min-h-14 w-full items-center justify-center gap-2 rounded-3xl bg-emerald-600 px-4 py-4 font-black text-white shadow-lift">
-            <Plus size={20} /> Nova conta manual
-          </button>
+          <div className="grid gap-2">
+            <button type="button" onClick={shareMonthBills} className="flex min-h-14 w-full items-center justify-center gap-2 rounded-3xl bg-sky-100 px-4 py-4 font-black text-sky-800 shadow-soft">
+              <Send size={20} /> Enviar mês no WhatsApp
+            </button>
+            <button type="button" onClick={newBillForm} className="flex min-h-14 w-full items-center justify-center gap-2 rounded-3xl bg-emerald-600 px-4 py-4 font-black text-white shadow-lift">
+              <Plus size={20} /> Nova conta manual
+            </button>
+          </div>
 
           {monthBills.length ? (
             monthBills.map((bill) => (

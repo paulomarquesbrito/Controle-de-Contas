@@ -304,3 +304,32 @@ configuração do cofre
 - Não compartilhe o token.
 - Se trocar de celular, configure de novo e toque em `Baixar`.
 - Se algo parecer errado, faça backup manual antes de importar ou substituir dados.
+
+## Como Baixar o APK Android Pelo GitHub
+
+O app agora também pode virar um APK Android para ter notificações automáticas locais no celular.
+
+Você não precisa instalar Android Studio.
+
+1. Entre no repositório do app no GitHub.
+2. Clique em `Actions`.
+3. Clique em `Build Android APK`.
+4. Clique em `Run workflow`.
+5. Aguarde a execução terminar.
+6. Abra a execução concluída.
+7. Baixe o arquivo `meu-controle-financeiro-apk`.
+8. Extraia o `.zip`.
+9. Envie o `app-debug.apk` para o celular.
+10. Abra o APK no celular e permita a instalação.
+
+Depois de instalar:
+
+1. Abra o app Android.
+2. Vá em `Ajustes`.
+3. Vá em `Notificações`.
+4. Toque em `Permissão`.
+5. Toque em `Testar`.
+6. Ative `Ativar notificações automáticas no Android`.
+7. Toque em `Salvar`.
+
+Para atualizar o app no futuro, rode o workflow de novo, baixe o APK novo e instale por cima do anterior. Antes de atualizar, envie os dados para o cofre do GitHub ou exporte um backup.

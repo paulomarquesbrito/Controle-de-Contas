@@ -1,0 +1,11 @@
+{
+  "appId": "br.com.meucontrolefinanceiro.app",
+  "appName": "Meu Controle Financeiro",
+  "webDir": "dist",
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_finance",
+      "iconColor": "#047857"
+    }
+  }
+}

@@ -6,7 +6,13 @@ import { createBackupPayload, downloadBackup, readBackupFile, restoreBackup } fr
 import { clearAllData, ensureInitialData } from '../db/indexedDb.js';
 import { deleteCategoryIfUnused, deleteLearnedRule, saveCategory, saveLearnedRule } from '../services/categoryService.js';
 import { downloadFromGithub, getGithubSyncConfig, saveGithubSyncConfig, uploadToGithub } from '../services/githubSyncService.js';
-import { getNotificationSupport, requestNotificationPermission, saveNotificationSettings } from '../services/notificationService.js';
+import {
+  getNotificationRuntimeStatus,
+  getNotificationSupport,
+  requestNotificationPermission,
+  saveNotificationSettings,
+  sendTestNotification,
+} from '../services/notificationService.js';
 
 function Section({ title, description, children }) {
   return (
@@ -57,10 +63,20 @@ export default function SettingsPage({ data, refresh, showToast, pwaInstall }) {
   });
   const [syncPassword, setSyncPassword] = useState('');
   const [syncBusy, setSyncBusy] = useState(false);
-  const support = getNotificationSupport();
+  const [notificationRuntime, setNotificationRuntime] = useState(getNotificationSupport());
+  const support = notificationRuntime || getNotificationSupport();
 
   useEffect(() => {
     setNotificationForm(data.notification_settings?.[0] || { id: 'default', enabled: false });
+    let active = true;
+    getNotificationRuntimeStatus()
+      .then((status) => {
+        if (active) setNotificationRuntime(status);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
   }, [data.notification_settings]);
 
   useEffect(() => {
@@ -143,13 +159,28 @@ export default function SettingsPage({ data, refresh, showToast, pwaInstall }) {
 
   async function requestPermission() {
     const result = await requestNotificationPermission();
+    const status = await getNotificationRuntimeStatus().catch(() => null);
+    if (status) setNotificationRuntime(status);
     showToast(result.message);
   }
 
   async function saveNotifications() {
+    let permissionResult = null;
+    if (notificationForm.enabled) {
+      permissionResult = await requestNotificationPermission();
+    }
     await saveNotificationSettings(notificationForm);
     await refresh();
-    showToast('Configurações de notificação salvas.');
+    const status = await getNotificationRuntimeStatus().catch(() => null);
+    if (status) setNotificationRuntime(status);
+    showToast(permissionResult?.message || 'Configurações de notificação salvas.');
+  }
+
+  async function testNotification() {
+    const result = await sendTestNotification();
+    const status = await getNotificationRuntimeStatus().catch(() => null);
+    if (status) setNotificationRuntime(status);
+    showToast(result.message);
   }
 
   async function installPwa() {
@@ -321,15 +352,21 @@ export default function SettingsPage({ data, refresh, showToast, pwaInstall }) {
         </div>
       </Section>
 
-      <Section title="Notificações" description="Os avisos internos funcionam sempre. Notificações do sistema dependem do navegador, permissão e contexto seguro.">
+      <Section title="Notificações" description="No Android instalado, o app agenda avisos reais no celular. No navegador/PWA, os avisos internos continuam funcionando.">
         <div className="rounded-2xl bg-slate-50 p-3 text-sm text-slate-600">
+          <p><b>Ambiente:</b> {support.automatic ? 'app Android com agendamento automático' : 'navegador/PWA sem despertador em segundo plano'}</p>
           <p><b>Suporte:</b> {support.supported ? 'disponível' : 'limitado neste endereço/navegador'}</p>
           <p><b>Permissão:</b> {support.permission}</p>
+          {support.automatic ? <p><b>Alarmes exatos:</b> {support.exactAlarmPermission || 'unknown'}</p> : null}
+          <p><b>Agendadas:</b> {(notificationForm.lastScheduledIds || []).length}</p>
+          <p><b>Último agendamento:</b> {notificationForm.lastAutomaticScheduleAt ? new Date(notificationForm.lastAutomaticScheduleAt).toLocaleString('pt-BR') : 'nunca'}</p>
         </div>
-        <ToggleField label="Ativar notificações locais" checked={Boolean(notificationForm.enabled)} onChange={(enabled) => setNotificationForm({ ...notificationForm, enabled })} />
+        <ToggleField label="Ativar notificações automáticas no Android" checked={Boolean(notificationForm.enabled)} onChange={(enabled) => setNotificationForm({ ...notificationForm, enabled })} />
         <ToggleField label="Avisar contas próximas" checked={Boolean(notificationForm.billsBeforeDue)} onChange={(billsBeforeDue) => setNotificationForm({ ...notificationForm, billsBeforeDue })} />
         <ToggleField label="Avisar contas atrasadas" checked={Boolean(notificationForm.overdueBills)} onChange={(overdueBills) => setNotificationForm({ ...notificationForm, overdueBills })} />
         <ToggleField label="Avisar faturas próximas" checked={Boolean(notificationForm.invoicesBeforeDue)} onChange={(invoicesBeforeDue) => setNotificationForm({ ...notificationForm, invoicesBeforeDue })} />
+        <ToggleField label="Avisar faturas vencidas" checked={notificationForm.overdueInvoices !== false} onChange={(overdueInvoices) => setNotificationForm({ ...notificationForm, overdueInvoices })} />
+        <ToggleField label="Lembrete de backup" checked={notificationForm.backupReminder !== false} onChange={(backupReminder) => setNotificationForm({ ...notificationForm, backupReminder })} />
         <TextField
           label="Dias antes do vencimento"
           type="number"
@@ -338,9 +375,18 @@ export default function SettingsPage({ data, refresh, showToast, pwaInstall }) {
           value={notificationForm.daysBeforeDue || 3}
           onChange={(daysBeforeDue) => setNotificationForm({ ...notificationForm, daysBeforeDue })}
         />
-        <div className="grid grid-cols-2 gap-2">
+        <TextField
+          label="Horário dos avisos"
+          type="time"
+          value={notificationForm.notificationTime || '09:00'}
+          onChange={(notificationTime) => setNotificationForm({ ...notificationForm, notificationTime })}
+        />
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <button type="button" onClick={requestPermission} className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-slate-100 font-black text-slate-700">
             <Bell size={18} /> Permissão
+          </button>
+          <button type="button" onClick={testNotification} className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-sky-100 font-black text-sky-800">
+            <Bell size={18} /> Testar
           </button>
           <button type="button" onClick={saveNotifications} className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-emerald-600 font-black text-white">
             <Save size={18} /> Salvar
